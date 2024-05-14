@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using System.Web;
+using Aspire.Dashboard.Authentication.OtlpConnection;
 
 namespace Aspire.Dashboard.Model;
 
@@ -26,45 +27,53 @@ internal sealed class ValidateTokenMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (context.Request.Path.Equals("/login", StringComparisons.UrlPath) && context.Request.Query.TryGetValue("t", out var value))
+        // Don't set browser security headers on OTLP requests.
+        if (context.Features.Get<IOtlpConnectionFeature>() == null)
         {
-            if (_options.CurrentValue.Frontend.AuthMode == FrontendAuthMode.BrowserToken)
+            if (context.Request.Path.Equals("/login", StringComparisons.UrlPath) &&
+                context.Request.Query.TryGetValue("t", out var value))
             {
-                var dashboardOptions = context.RequestServices.GetRequiredService<IOptionsMonitor<DashboardOptions>>();
-                if (await TryAuthenticateAsync(value.ToString(), context, dashboardOptions).ConfigureAwait(false))
+                if (_options.CurrentValue.Frontend.AuthMode == FrontendAuthMode.BrowserToken)
                 {
-                    // Success. Redirect to the app.
-                    if (context.Request.Query.TryGetValue("returnUrl", out var returnUrl))
+                    var dashboardOptions =
+                        context.RequestServices.GetRequiredService<IOptionsMonitor<DashboardOptions>>();
+                    if (await TryAuthenticateAsync(value.ToString(), context, dashboardOptions).ConfigureAwait(false))
                     {
-                        context.Response.Redirect(returnUrl.ToString());
+                        // Success. Redirect to the app.
+                        if (context.Request.Query.TryGetValue("returnUrl", out var returnUrl))
+                        {
+                            context.Response.Redirect(returnUrl.ToString());
+                        }
+                        else
+                        {
+                            context.Response.Redirect(DashboardUrls.ResourcesUrl());
+                        }
                     }
                     else
                     {
-                        context.Response.Redirect(DashboardUrls.ResourcesUrl());
+                        // Failure.
+                        // The bad token in the query string could be confusing with the token in the text box.
+                        // Remove it before the presenting the UI to the user.
+                        var qs = HttpUtility.ParseQueryString(context.Request.QueryString.ToString());
+                        qs.Remove("t");
+
+                        // Collection created by ParseQueryString handles escaping names and values.
+                        var newQuerystring = qs.ToString();
+                        if (!string.IsNullOrEmpty(newQuerystring))
+                        {
+                            newQuerystring = "?" + newQuerystring;
+                        }
+
+                        context.Response.Redirect($"{context.Request.Path}{newQuerystring}");
                     }
+
+                    return;
                 }
                 else
                 {
-                    // Failure.
-                    // The bad token in the query string could be confusing with the token in the text box.
-                    // Remove it before the presenting the UI to the user.
-                    var qs = HttpUtility.ParseQueryString(context.Request.QueryString.ToString());
-                    qs.Remove("t");
-
-                    // Collection created by ParseQueryString handles escaping names and values.
-                    var newQuerystring = qs.ToString();
-                    if (!string.IsNullOrEmpty(newQuerystring))
-                    {
-                        newQuerystring = "?" + newQuerystring;
-                    }
-                    context.Response.Redirect($"{context.Request.Path}{newQuerystring}");
+                    _logger.LogDebug(
+                        $"Request to validate token URL but auth mode isn't set to {FrontendAuthMode.BrowserToken}.");
                 }
-
-                return;
-            }
-            else
-            {
-                _logger.LogDebug($"Request to validate token URL but auth mode isn't set to {FrontendAuthMode.BrowserToken}.");
             }
         }
 
