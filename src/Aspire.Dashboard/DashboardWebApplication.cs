@@ -481,9 +481,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
             return () =>
             {
                 var endpoint = endpointConfiguration.ListenOptions.IPEndPoint!;
-                var resolvedAddress = address.Scheme.ToLowerInvariant() + Uri.SchemeDelimiter +
-                                      address.Host.ToLowerInvariant() + ":" +
-                                      endpoint.Port.ToString(CultureInfo.InvariantCulture);
+                var resolvedAddress = address.Scheme.ToLowerInvariant() + Uri.SchemeDelimiter + address.Host.ToLowerInvariant() + ":" + endpoint.Port.ToString(CultureInfo.InvariantCulture);
                 return new EndpointInfo(resolvedAddress, endpoint, endpointConfiguration.IsHttps);
             };
         }
