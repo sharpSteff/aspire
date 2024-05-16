@@ -100,21 +100,21 @@ public sealed class OtlpOptions
     {
         if (string.IsNullOrEmpty(EndpointUrl))
         {
-            errorMessage = $"OTLP endpoint URL is not configured. Specify a {DashboardConfigNames.DashboardOtlpGrpcUrlName.EnvVarName} value.";
+            errorMessage = $"OTLP grpc endpoint URL is not configured. Specify a {DashboardConfigNames.DashboardOtlpGrpcUrlName.EnvVarName} value.";
             return false;
         }
         else
         {
             if (!Uri.TryCreate(EndpointUrl, UriKind.Absolute, out _parsedGrpcEndpointUrl))
             {
-                errorMessage = $"Failed to parse OTLP endpoint URL '{EndpointUrl}'.";
+                errorMessage = $"Failed to parse OTLP grpc endpoint URL '{EndpointUrl}'.";
                 return false;
             }
         }
 
         if (!string.IsNullOrEmpty(HttpEndpointUrl) && !Uri.TryCreate(HttpEndpointUrl, UriKind.Absolute, out _parsedHttpEndpointUrl))
         {
-            errorMessage = $"Failed to parse HTTP OTLP endpoint URL '{HttpEndpointUrl}'.";
+            errorMessage = $"Failed to parse OTLP HTTP endpoint URL '{HttpEndpointUrl}'.";
             return false;
         }
 
