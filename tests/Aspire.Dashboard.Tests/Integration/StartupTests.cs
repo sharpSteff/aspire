@@ -95,7 +95,7 @@ public class StartupTests(ITestOutputHelper testOutputHelper)
                     additionalConfiguration: initialData =>
                     {
                         initialData[DashboardConfigNames.DashboardFrontendUrlName.ConfigKey] = $"https://127.0.0.1:{port}";
-                        initialData[DashboardConfigNames.DashboardOtlpUrlName.ConfigKey] = $"https://127.0.0.1:{port}";
+                        initialData[DashboardConfigNames.DashboardOtlpGrpcUrlName.ConfigKey] = $"https://127.0.0.1:{port}";
                     });
 
                 // Act
@@ -150,7 +150,7 @@ public class StartupTests(ITestOutputHelper testOutputHelper)
                     additionalConfiguration: initialData =>
                     {
                         initialData[DashboardConfigNames.DashboardFrontendUrlName.ConfigKey] = $"http://127.0.0.1:{port}";
-                        initialData[DashboardConfigNames.DashboardOtlpUrlName.ConfigKey] = $"http://127.0.0.1:{port}";
+                        initialData[DashboardConfigNames.DashboardOtlpGrpcUrlName.ConfigKey] = $"http://127.0.0.1:{port}";
                     },
                     testSink: testSink);
 
@@ -289,7 +289,7 @@ public class StartupTests(ITestOutputHelper testOutputHelper)
                     additionalConfiguration: data =>
                     {
                         data[DashboardConfigNames.DashboardFrontendUrlName.ConfigKey] = $"https://localhost:{frontendPort1};http://localhost:{frontendPort2}";
-                        data[DashboardConfigNames.DashboardOtlpUrlName.ConfigKey] = $"http://localhost:{otlpPort}";
+                        data[DashboardConfigNames.DashboardOtlpGrpcUrlName.ConfigKey] = $"http://localhost:{otlpPort}";
                     }, testSink: testSink);
 
                 // Act

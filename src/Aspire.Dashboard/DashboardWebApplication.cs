@@ -14,6 +14,7 @@ using Aspire.Dashboard.Authentication.OtlpConnection;
 using Aspire.Dashboard.Components;
 using Aspire.Dashboard.Configuration;
 using Aspire.Dashboard.Model;
+using Aspire.Dashboard.Otlp;
 using Aspire.Dashboard.Otlp.Grpc;
 using Aspire.Dashboard.Otlp.Storage;
 using Aspire.Hosting;
@@ -113,7 +114,8 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         ConfigureKestrelEndpoints(builder, dashboardOptions);
 
         var browserHttpsPort = dashboardOptions.Frontend.GetEndpointUris().FirstOrDefault(IsHttps)?.Port;
-        var isAllHttps = browserHttpsPort is not null && IsHttps(dashboardOptions.Otlp.GetEndpointUri());
+        var isAllHttps = browserHttpsPort is not null && IsHttps(dashboardOptions.Otlp.GetGrpcEndpointUri()) &&
+                         IsHttps(dashboardOptions.Otlp.GetHttpEndpointUri());
         if (isAllHttps)
         {
             // Explicitly configure the HTTPS redirect port as we're possibly listening on multiple HTTPS addresses
@@ -263,32 +265,11 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         _app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
         // OTLP HTTP services.
-        _app.MapPost("/v1/metrics",
-            async ([FromServices] OtlpMetricsService service, HttpContext httpContext) =>
-            {
-                var body = await ReadFullyAsync(httpContext).ConfigureAwait(false);
-                var metrics = ExportMetricsServiceRequest.Parser.ParseFrom(body);
-                await service.Export(metrics, null!).ConfigureAwait(false);
-            }
-        ).AllowAnonymous();
-
-        _app.MapPost("/v1/traces",
-            async ([FromServices] OtlpTraceService service, HttpContext httpContext) =>
-            {
-                var body = await ReadFullyAsync(httpContext).ConfigureAwait(false);
-                var traces = ExportTraceServiceRequest.Parser.ParseFrom(body);
-                await service.Export(traces, null!).ConfigureAwait(false);
-            }
-        ).AllowAnonymous();
-
-        _app.MapPost("/v1/logs",
-            async ([FromServices] OtlpLogsService service, HttpContext httpContext) =>
-            {
-                var body = await ReadFullyAsync(httpContext).ConfigureAwait(false);
-                var logs = ExportLogsServiceRequest.Parser.ParseFrom(body);
-                await service.Export(logs, null!).ConfigureAwait(false);
-            }
-        ).AllowAnonymous();
+        var httpEndpoint = dashboardOptions.Otlp.GetHttpEndpointUri();
+        if (httpEndpoint != null)
+        {
+            _app.ConfigureHttpOtlp(httpEndpoint);
+        }
 
         // OTLP gRPC services.
         _app.MapGrpcService<OtlpMetricsService>();
@@ -383,8 +364,10 @@ public sealed class DashboardWebApplication : IAsyncDisposable
     {
         // A single endpoint is configured if URLs are the same and the port isn't dynamic.
         var frontendUris = dashboardOptions.Frontend.GetEndpointUris();
-        var otlpUri = dashboardOptions.Otlp.GetEndpointUri();
-        var hasSingleEndpoint = frontendUris.Count == 1 && frontendUris[0] == otlpUri && otlpUri.Port != 0;
+        var otlpGrpcUri = dashboardOptions.Otlp.GetGrpcEndpointUri();
+        var otlpHttpUri = dashboardOptions.Otlp.GetHttpEndpointUri();
+        var hasSingleEndpoint = frontendUris.Count == 1 && frontendUris[0] == otlpGrpcUri && otlpGrpcUri.Port != 0 &&
+                                (otlpHttpUri == null || (frontendUris[0] == otlpHttpUri && otlpHttpUri.Port != 0));
 
         var initialValues = new Dictionary<string, string?>();
         var browserEndpointNames = new List<string>(capacity: frontendUris.Count);
@@ -393,10 +376,15 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         {
             // Translate high-level config settings such as DOTNET_DASHBOARD_OTLP_ENDPOINT_URL and ASPNETCORE_URLS
             // to Kestrel's schema for loading endpoints from configuration.
-            AddEndpointConfiguration(initialValues, "Otlp", otlpUri.OriginalString, HttpProtocols.Http2,
+            AddEndpointConfiguration(initialValues, "Otlp", otlpGrpcUri.OriginalString, HttpProtocols.Http2,
                 requiredClientCertificate: dashboardOptions.Otlp.AuthMode == OtlpAuthMode.ClientCertificate);
-            AddEndpointConfiguration(initialValues, "OtlpHttp", "http://localhost:4318", HttpProtocols.Http1AndHttp2,
-                requiredClientCertificate: false);
+
+            if (otlpHttpUri != null)
+            {
+                AddEndpointConfiguration(initialValues, "OtlpHttp", otlpHttpUri.AbsoluteUri,
+                    HttpProtocols.Http1AndHttp2,
+                    requiredClientCertificate: false);
+            }
 
             if (frontendUris.Count == 1)
             {
@@ -415,7 +403,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         }
         else
         {
-            AddEndpointConfiguration(initialValues, "Otlp", otlpUri.OriginalString, HttpProtocols.Http1AndHttp2,
+            AddEndpointConfiguration(initialValues, "Otlp", otlpGrpcUri.OriginalString, HttpProtocols.Http1AndHttp2,
                 requiredClientCertificate: dashboardOptions.Otlp.AuthMode == OtlpAuthMode.ClientCertificate);
         }
 
@@ -705,18 +693,12 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         return _app.DisposeAsync();
     }
 
-    private static bool IsHttps(Uri uri) => string.Equals(uri.Scheme, "https", StringComparison.Ordinal);
+    private static bool IsHttps(Uri? uri) =>
+        uri != null && string.Equals(uri.Scheme, "https", StringComparison.Ordinal);
 
     public static class FrontendAuthenticationDefaults
     {
         public const string AuthenticationScheme = "Frontend";
-    }
-
-    private static async Task<byte[]> ReadFullyAsync(HttpContext context)
-    {
-        using var ms = new System.IO.MemoryStream();
-        await context.Request.Body.CopyToAsync(ms).ConfigureAwait(false);
-        return ms.ToArray();
     }
 }
 
