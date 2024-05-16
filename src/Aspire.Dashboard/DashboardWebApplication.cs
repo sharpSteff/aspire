@@ -163,7 +163,10 @@ public sealed class DashboardWebApplication : IAsyncDisposable
 
         // this needs to be explicitly enumerated for each supported language
         // our language list comes from https://github.com/dotnet/arcade/blob/89008f339a79931cc49c739e9dbc1a27c608b379/src/Microsoft.DotNet.XliffTasks/build/Microsoft.DotNet.XliffTasks.props#L22
-        var supportedLanguages = new[] { "en", "cs", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-BR", "ru", "tr", "zh-Hans", "zh-Hant" };
+        var supportedLanguages = new[]
+        {
+            "en", "cs", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-BR", "ru", "tr", "zh-Hans", "zh-Hant"
+        };
 
         _app.UseRequestLocalization(new RequestLocalizationOptions()
             .AddSupportedCultures(supportedLanguages)
@@ -270,9 +273,9 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         if (dashboardOptions.Frontend.AuthMode == FrontendAuthMode.BrowserToken)
         {
             _app.MapPost("/api/validatetoken", async (string token, HttpContext httpContext, IOptionsMonitor<DashboardOptions> dashboardOptions) =>
-                {
-                    return await ValidateTokenMiddleware.TryAuthenticateAsync(token, httpContext, dashboardOptions).ConfigureAwait(false);
-                });
+            {
+                return await ValidateTokenMiddleware.TryAuthenticateAsync(token, httpContext, dashboardOptions).ConfigureAwait(false);
+            });
 
 #if DEBUG
             // Available in local debug for testing.
@@ -296,12 +299,9 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         return _app.Services.GetRequiredService<ILoggerFactory>().CreateLogger<DashboardWebApplication>();
     }
 
-    private static void WriteValidationFailures(
-        ILogger<DashboardWebApplication> logger,
-        IReadOnlyList<string> validationFailures)
+    private static void WriteValidationFailures(ILogger<DashboardWebApplication> logger, IReadOnlyList<string> validationFailures)
     {
-        logger.LogError("Failed to start the dashboard due to {Count} configuration error(s).",
-            validationFailures.Count);
+        logger.LogError("Failed to start the dashboard due to {Count} configuration error(s).", validationFailures.Count);
         foreach (var message in validationFailures)
         {
             logger.LogError("{ErrorMessage}", message);
@@ -310,8 +310,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
 
     private static void WriteVersion(ILogger<DashboardWebApplication> logger)
     {
-        if (typeof(DashboardWebApplication).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-                ?.InformationalVersion is string informationalVersion)
+        if (typeof(DashboardWebApplication).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion is string informationalVersion)
         {
             // Write version at info level so it's written to the console by default. Help us debug user issues.
             // Display version and commit like 8.0.0-preview.2.23619.3+17dd83f67c6822954ec9a918ef2d048a78ad4697
@@ -323,11 +322,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
     /// Load <see cref="DashboardOptions"/> from configuration without using DI. This performs
     /// the same steps as getting the options from DI but without the need for a service provider.
     /// </summary>
-    private static bool TryGetDashboardOptions(
-        WebApplicationBuilder builder,
-        IConfigurationSection dashboardConfigSection,
-        [NotNullWhen(true)] out DashboardOptions? dashboardOptions,
-        [NotNullWhen(false)] out IEnumerable<string>? failureMessages)
+    private static bool TryGetDashboardOptions(WebApplicationBuilder builder, IConfigurationSection dashboardConfigSection, [NotNullWhen(true)] out DashboardOptions? dashboardOptions, [NotNullWhen(false)] out IEnumerable<string>? failureMessages)
     {
         dashboardOptions = new DashboardOptions();
         dashboardConfigSection.Bind(dashboardOptions);
@@ -363,14 +358,10 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         {
             // Translate high-level config settings such as DOTNET_DASHBOARD_OTLP_ENDPOINT_URL and ASPNETCORE_URLS
             // to Kestrel's schema for loading endpoints from configuration.
-            AddEndpointConfiguration(initialValues, "Otlp", otlpGrpcUri.OriginalString, HttpProtocols.Http2,
-                requiredClientCertificate: dashboardOptions.Otlp.AuthMode == OtlpAuthMode.ClientCertificate);
-
+            AddEndpointConfiguration(initialValues, "Otlp", otlpGrpcUri.OriginalString, HttpProtocols.Http2, requiredClientCertificate: dashboardOptions.Otlp.AuthMode == OtlpAuthMode.ClientCertificate);
             if (otlpHttpUri != null)
             {
-                AddEndpointConfiguration(initialValues, "OtlpHttp", otlpHttpUri.AbsoluteUri,
-                    HttpProtocols.Http1AndHttp2,
-                    requiredClientCertificate: false);
+                AddEndpointConfiguration(initialValues, "OtlpHttp", otlpHttpUri.AbsoluteUri, HttpProtocols.Http1AndHttp2, requiredClientCertificate: false);
             }
 
             if (frontendUris.Count == 1)
