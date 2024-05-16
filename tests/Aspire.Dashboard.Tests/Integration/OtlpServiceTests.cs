@@ -256,7 +256,7 @@ public class OtlpServiceTests
         await using var app = IntegrationTestHelpers.CreateDashboardWebApplication(_testOutputHelper, config =>
         {
             // Change dashboard to HTTPS so the caller can negotiate a HTTP/2 connection.
-            config[DashboardConfigNames.DashboardOtlpGrpcUrlName.ConfigKey] = "https://127.0.0.1:0";
+            config[DashboardConfigNames.DashboardOtlpUrlName.ConfigKey] = "https://127.0.0.1:0";
 
             config[DashboardConfigNames.DashboardOtlpAuthModeName.ConfigKey] = OtlpAuthMode.ClientCertificate.ToString();
         });
@@ -282,7 +282,7 @@ public class OtlpServiceTests
         await using var app = IntegrationTestHelpers.CreateDashboardWebApplication(_testOutputHelper, config =>
         {
             // Change dashboard to HTTPS so the caller can negotiate a HTTP/2 connection.
-            config[DashboardConfigNames.DashboardOtlpGrpcUrlName.ConfigKey] = "https://127.0.0.1:0";
+            config[DashboardConfigNames.DashboardOtlpUrlName.ConfigKey] = "https://127.0.0.1:0";
 
             config[DashboardConfigNames.DashboardOtlpAuthModeName.ConfigKey] = OtlpAuthMode.ClientCertificate.ToString();
 

@@ -100,7 +100,7 @@ public sealed class OtlpOptions
     {
         if (string.IsNullOrEmpty(EndpointUrl))
         {
-            errorMessage = $"OTLP grpc endpoint URL is not configured. Specify a {DashboardConfigNames.DashboardOtlpGrpcUrlName.EnvVarName} value.";
+            errorMessage = $"OTLP grpc endpoint URL is not configured. Specify a {DashboardConfigNames.DashboardOtlpUrlName.EnvVarName} value.";
             return false;
         }
         else
