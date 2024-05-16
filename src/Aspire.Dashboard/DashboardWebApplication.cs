@@ -81,8 +81,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
 #endif
 
         // Allow for a user specified JSON config file on disk. Throw an error if the specified file doesn't exist.
-        if (builder.Configuration[DashboardConfigNames.DashboardConfigFilePathName.ConfigKey] is
-            { Length: > 0 } configFilePath)
+        if (builder.Configuration[DashboardConfigNames.DashboardConfigFilePathName.ConfigKey] is { Length: > 0 } configFilePath)
         {
             builder.Configuration.AddJsonFile(configFilePath, optional: false, reloadOnChange: true);
         }
@@ -114,8 +113,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         ConfigureKestrelEndpoints(builder, dashboardOptions);
 
         var browserHttpsPort = dashboardOptions.Frontend.GetEndpointUris().FirstOrDefault(IsHttps)?.Port;
-        var isAllHttps = browserHttpsPort is not null && IsHttps(dashboardOptions.Otlp.GetGrpcEndpointUri()) &&
-                         IsHttps(dashboardOptions.Otlp.GetHttpEndpointUri());
+        var isAllHttps = browserHttpsPort is not null && IsHttps(dashboardOptions.Otlp.GetGrpcEndpointUri()) && IsHttps(dashboardOptions.Otlp.GetHttpEndpointUri());
         if (isAllHttps)
         {
             // Explicitly configure the HTTPS redirect port as we're possibly listening on multiple HTTPS addresses
@@ -142,10 +140,8 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         builder.Services.AddTransient<OtlpLogsService>();
 
         builder.Services.AddTransient<TracesViewModel>();
-        builder.Services.TryAddEnumerable(
-            ServiceDescriptor.Scoped<IOutgoingPeerResolver, ResourceOutgoingPeerResolver>());
-        builder.Services.TryAddEnumerable(ServiceDescriptor
-            .Scoped<IOutgoingPeerResolver, BrowserLinkOutgoingPeerResolver>());
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Scoped<IOutgoingPeerResolver, ResourceOutgoingPeerResolver>());
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Scoped<IOutgoingPeerResolver, BrowserLinkOutgoingPeerResolver>());
 
         builder.Services.AddFluentUIComponents();
 
@@ -167,10 +163,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
 
         // this needs to be explicitly enumerated for each supported language
         // our language list comes from https://github.com/dotnet/arcade/blob/89008f339a79931cc49c739e9dbc1a27c608b379/src/Microsoft.DotNet.XliffTasks/build/Microsoft.DotNet.XliffTasks.props#L22
-        var supportedLanguages = new[]
-        {
-            "en", "cs", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-BR", "ru", "tr", "zh-Hans", "zh-Hant"
-        };
+        var supportedLanguages = new[] { "en", "cs", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-BR", "ru", "tr", "zh-Hans", "zh-Hant" };
 
         _app.UseRequestLocalization(new RequestLocalizationOptions()
             .AddSupportedCultures(supportedLanguages)
@@ -195,14 +188,12 @@ public sealed class DashboardWebApplication : IAsyncDisposable
             if (_otlpServiceEndPointAccessor != null)
             {
                 // This isn't used by dotnet watch but still useful to have for debugging
-                _logger.LogInformation("OTLP server running at: {OtlpEndpointUri}",
-                    _otlpServiceEndPointAccessor().Address);
+                _logger.LogInformation("OTLP server running at: {OtlpEndpointUri}", _otlpServiceEndPointAccessor().Address);
             }
 
             if (_dashboardOptionsMonitor.CurrentValue.Otlp.AuthMode == OtlpAuthMode.Unsecured)
             {
-                _logger.LogWarning(
-                    "OTLP server is unsecured. Untrusted apps can send telemetry to the dashboard. For more information, visit https://go.microsoft.com/fwlink/?linkid=2267030");
+                _logger.LogWarning("OTLP server is unsecured. Untrusted apps can send telemetry to the dashboard. For more information, visit https://go.microsoft.com/fwlink/?linkid=2267030");
             }
         });
 
@@ -278,11 +269,9 @@ public sealed class DashboardWebApplication : IAsyncDisposable
 
         if (dashboardOptions.Frontend.AuthMode == FrontendAuthMode.BrowserToken)
         {
-            _app.MapPost("/api/validatetoken",
-                async (string token, HttpContext httpContext, IOptionsMonitor<DashboardOptions> dashboardOptions) =>
+            _app.MapPost("/api/validatetoken", async (string token, HttpContext httpContext, IOptionsMonitor<DashboardOptions> dashboardOptions) =>
                 {
-                    return await ValidateTokenMiddleware.TryAuthenticateAsync(token, httpContext, dashboardOptions)
-                        .ConfigureAwait(false);
+                    return await ValidateTokenMiddleware.TryAuthenticateAsync(token, httpContext, dashboardOptions).ConfigureAwait(false);
                 });
 
 #if DEBUG
@@ -298,9 +287,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         }
         else if (dashboardOptions.Frontend.AuthMode == FrontendAuthMode.OpenIdConnect)
         {
-            _app.MapPost("/authentication/logout",
-                () => TypedResults.SignOut(authenticationSchemes:
-                    [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]));
+            _app.MapPost("/authentication/logout", () => TypedResults.SignOut(authenticationSchemes: [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]));
         }
     }
 
