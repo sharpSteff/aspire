@@ -348,8 +348,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         var frontendUris = dashboardOptions.Frontend.GetEndpointUris();
         var otlpGrpcUri = dashboardOptions.Otlp.GetGrpcEndpointUri();
         var otlpHttpUri = dashboardOptions.Otlp.GetHttpEndpointUri();
-        var hasSingleEndpoint = frontendUris.Count == 1 && frontendUris[0] == otlpGrpcUri && otlpGrpcUri.Port != 0 &&
-                                (otlpHttpUri == null || (frontendUris[0] == otlpHttpUri && otlpHttpUri.Port != 0));
+        var hasSingleEndpoint = frontendUris.Count == 1 && frontendUris[0] == otlpGrpcUri && otlpGrpcUri.Port != 0 && (otlpHttpUri == null || (frontendUris[0] == otlpHttpUri && otlpHttpUri.Port != 0));
 
         var initialValues = new Dictionary<string, string?>();
         var browserEndpointNames = new List<string>(capacity: frontendUris.Count);
@@ -381,16 +380,10 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         }
         else
         {
-            AddEndpointConfiguration(initialValues, "Otlp", otlpGrpcUri.OriginalString, HttpProtocols.Http1AndHttp2,
-                requiredClientCertificate: dashboardOptions.Otlp.AuthMode == OtlpAuthMode.ClientCertificate);
+            AddEndpointConfiguration(initialValues, "Otlp", otlpGrpcUri.OriginalString, HttpProtocols.Http1AndHttp2, requiredClientCertificate: dashboardOptions.Otlp.AuthMode == OtlpAuthMode.ClientCertificate);
         }
 
-        static void AddEndpointConfiguration(
-            Dictionary<string, string?> values,
-            string endpointName,
-            string url,
-            HttpProtocols? protocols = null,
-            bool requiredClientCertificate = false)
+        static void AddEndpointConfiguration(Dictionary<string, string?> values, string endpointName, string url, HttpProtocols? protocols = null, bool requiredClientCertificate = false)
         {
             values[$"Kestrel:Endpoints:{endpointName}:Url"] = url;
 
@@ -401,8 +394,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
 
             if (requiredClientCertificate)
             {
-                values[$"Kestrel:Endpoints:{endpointName}:ClientCertificateMode"] =
-                    ClientCertificateMode.RequireCertificate.ToString();
+                values[$"Kestrel:Endpoints:{endpointName}:ClientCertificateMode"] = ClientCertificateMode.RequireCertificate.ToString();
             }
         }
 
@@ -446,12 +438,10 @@ public sealed class DashboardWebApplication : IAsyncDisposable
 
                 endpointConfiguration.ListenOptions.UseOtlpConnection();
 
-                if (endpointConfiguration.HttpsOptions.ClientCertificateMode ==
-                    ClientCertificateMode.RequireCertificate)
+                if (endpointConfiguration.HttpsOptions.ClientCertificateMode == ClientCertificateMode.RequireCertificate)
                 {
                     // Allow invalid certificates when creating the connection. Certificate validation is done in the auth middleware.
-                    endpointConfiguration.HttpsOptions.ClientCertificateValidation =
-                        (certificate, chain, sslPolicyErrors) => { return true; };
+                    endpointConfiguration.HttpsOptions.ClientCertificateValidation = (certificate, chain, sslPolicyErrors) => { return true; };
                 }
             });
 
@@ -473,12 +463,10 @@ public sealed class DashboardWebApplication : IAsyncDisposable
 
                 endpointConfiguration.ListenOptions.UseOtlpConnection();
 
-                if (endpointConfiguration.HttpsOptions.ClientCertificateMode ==
-                    ClientCertificateMode.RequireCertificate)
+                if (endpointConfiguration.HttpsOptions.ClientCertificateMode == ClientCertificateMode.RequireCertificate)
                 {
                     // Allow invalid certificates when creating the connection. Certificate validation is done in the auth middleware.
-                    endpointConfiguration.HttpsOptions.ClientCertificateValidation =
-                        (certificate, chain, sslPolicyErrors) => { return true; };
+                    endpointConfiguration.HttpsOptions.ClientCertificateValidation = (certificate, chain, sslPolicyErrors) => { return true; };
                 }
             });
         });
