@@ -23,7 +23,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
@@ -31,9 +30,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using OpenTelemetry.Proto.Collector.Logs.V1;
-using OpenTelemetry.Proto.Collector.Metrics.V1;
-using OpenTelemetry.Proto.Collector.Trace.V1;
 
 namespace Aspire.Dashboard;
 
@@ -441,7 +437,10 @@ public sealed class DashboardWebApplication : IAsyncDisposable
                 if (endpointConfiguration.HttpsOptions.ClientCertificateMode == ClientCertificateMode.RequireCertificate)
                 {
                     // Allow invalid certificates when creating the connection. Certificate validation is done in the auth middleware.
-                    endpointConfiguration.HttpsOptions.ClientCertificateValidation = (certificate, chain, sslPolicyErrors) => { return true; };
+                    endpointConfiguration.HttpsOptions.ClientCertificateValidation = (certificate, chain, sslPolicyErrors) =>
+                    {
+                        return true;
+                    };
                 }
             });
 
@@ -494,12 +493,9 @@ public sealed class DashboardWebApplication : IAsyncDisposable
     {
         var authentication = builder.Services
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddScheme<OtlpCompositeAuthenticationHandlerOptions, OtlpCompositeAuthenticationHandler>(
-                OtlpCompositeAuthenticationDefaults.AuthenticationScheme, o => { })
-            .AddScheme<OtlpApiKeyAuthenticationHandlerOptions, OtlpApiKeyAuthenticationHandler>(
-                OtlpApiKeyAuthenticationDefaults.AuthenticationScheme, o => { })
-            .AddScheme<OtlpConnectionAuthenticationHandlerOptions, OtlpConnectionAuthenticationHandler>(
-                OtlpConnectionAuthenticationDefaults.AuthenticationScheme, o => { })
+            .AddScheme<OtlpCompositeAuthenticationHandlerOptions, OtlpCompositeAuthenticationHandler>(OtlpCompositeAuthenticationDefaults.AuthenticationScheme, o => { })
+            .AddScheme<OtlpApiKeyAuthenticationHandlerOptions, OtlpApiKeyAuthenticationHandler>(OtlpApiKeyAuthenticationDefaults.AuthenticationScheme, o => { })
+            .AddScheme<OtlpConnectionAuthenticationHandlerOptions, OtlpConnectionAuthenticationHandler>(OtlpConnectionAuthenticationDefaults.AuthenticationScheme, o => { })
             .AddCertificate(options =>
             {
                 // Bind options to configuration so they can be overridden by environment variables.
@@ -530,13 +526,12 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         switch (dashboardOptions.Frontend.AuthMode)
         {
             case FrontendAuthMode.OpenIdConnect:
-                authentication.AddPolicyScheme(FrontendAuthenticationDefaults.AuthenticationScheme,
-                    displayName: FrontendAuthenticationDefaults.AuthenticationScheme, o =>
-                    {
-                        // The frontend authentication scheme just redirects to OpenIdConnect and Cookie schemes, as appropriate.
-                        o.ForwardDefault = CookieAuthenticationDefaults.AuthenticationScheme;
-                        o.ForwardChallenge = OpenIdConnectDefaults.AuthenticationScheme;
-                    });
+                authentication.AddPolicyScheme(FrontendAuthenticationDefaults.AuthenticationScheme, displayName: FrontendAuthenticationDefaults.AuthenticationScheme, o =>
+                {
+                    // The frontend authentication scheme just redirects to OpenIdConnect and Cookie schemes, as appropriate.
+                    o.ForwardDefault = CookieAuthenticationDefaults.AuthenticationScheme;
+                    o.ForwardChallenge = OpenIdConnectDefaults.AuthenticationScheme;
+                });
 
                 authentication.AddCookie();
 
@@ -567,9 +562,10 @@ public sealed class DashboardWebApplication : IAsyncDisposable
                 });
                 break;
             case FrontendAuthMode.BrowserToken:
-                authentication.AddPolicyScheme(FrontendAuthenticationDefaults.AuthenticationScheme,
-                    displayName: FrontendAuthenticationDefaults.AuthenticationScheme,
-                    o => { o.ForwardDefault = CookieAuthenticationDefaults.AuthenticationScheme; });
+                authentication.AddPolicyScheme(FrontendAuthenticationDefaults.AuthenticationScheme, displayName: FrontendAuthenticationDefaults.AuthenticationScheme, o =>
+                {
+                    o.ForwardDefault = CookieAuthenticationDefaults.AuthenticationScheme;
+                });
 
                 authentication.AddCookie(options =>
                 {
@@ -581,8 +577,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
                         // Add claim when signing in with cookies from browser token.
                         // Authorization requires this claim. This prevents an identity from another auth scheme from being allow.
                         var claimsIdentity = (ClaimsIdentity)context.Principal!.Identity!;
-                        claimsIdentity.AddClaim(new Claim(FrontendAuthorizationDefaults.BrowserTokenClaimName,
-                            bool.TrueString));
+                        claimsIdentity.AddClaim(new Claim(FrontendAuthorizationDefaults.BrowserTokenClaimName, bool.TrueString));
                         return Task.CompletedTask;
                     };
                 });
@@ -625,8 +620,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
                             .Build());
                     break;
                 default:
-                    throw new NotSupportedException(
-                        $"Unexpected {nameof(FrontendAuthMode)} enum member: {dashboardOptions.Frontend.AuthMode}");
+                    throw new NotSupportedException($"Unexpected {nameof(FrontendAuthMode)} enum member: {dashboardOptions.Frontend.AuthMode}");
             }
         });
     }
@@ -659,8 +653,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         return _app.DisposeAsync();
     }
 
-    private static bool IsHttps(Uri? uri) =>
-        uri != null && string.Equals(uri.Scheme, "https", StringComparison.Ordinal);
+    private static bool IsHttps(Uri? uri) => uri != null && string.Equals(uri.Scheme, "https", StringComparison.Ordinal);
 
     public static class FrontendAuthenticationDefaults
     {
