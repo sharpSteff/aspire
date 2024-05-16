@@ -21,7 +21,7 @@ public static class WebApplicationExtensions
                 await service.Export(metrics, null!).ConfigureAwait(false);
             }
         ).AllowAnonymous()
-        .RequireHost(httpEndpoint.AbsoluteUri);
+        .RequireHost($"*:{httpEndpoint.Port}");
 
         app.MapPost("/v1/traces",
                 async ([FromServices] OtlpTraceService service, HttpContext httpContext) =>
@@ -31,7 +31,7 @@ public static class WebApplicationExtensions
                     await service.Export(traces, null!).ConfigureAwait(false);
                 }
             ).AllowAnonymous()
-            .RequireHost(httpEndpoint.AbsoluteUri);
+            .RequireHost($"*:{httpEndpoint.Port}");
 
         app.MapPost("/v1/logs",
             async ([FromServices] OtlpLogsService service, HttpContext httpContext) =>
@@ -41,7 +41,7 @@ public static class WebApplicationExtensions
                 await service.Export(logs, null!).ConfigureAwait(false);
             }
         ).AllowAnonymous()
-        .RequireHost(httpEndpoint.AbsoluteUri);
+        .RequireHost($"*:{httpEndpoint.Port}");
 
         return app;
     }
