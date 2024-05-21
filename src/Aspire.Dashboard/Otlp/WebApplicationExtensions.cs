@@ -13,6 +13,9 @@ namespace Aspire.Dashboard.Otlp;
 
 public static class WebApplicationExtensions
 {
+    // https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/large-object-heap
+    private const int MaxSizeLessThanLOH = 84999;
+
     public static WebApplication ConfigureHttpOtlp(this WebApplication app, Uri httpEndpoint)
     {
         app.MapPost("/v1/metrics",
@@ -44,16 +47,27 @@ public static class WebApplicationExtensions
 
     private static async Task ExportOtlpData(HttpContext httpContext, Func<ReadOnlySequence<byte>, Task> exporter)
     {
-        var reader = httpContext.Request.BodyReader;
-        var readResult = await reader.ReadAsync().ConfigureAwait(false);
-        var readResultBuffer = readResult.Buffer;
-        if (readResultBuffer.IsEmpty && readResult.IsCompleted)
+        var readSize = (int?)httpContext.Request.Headers.ContentLength ?? MaxSizeLessThanLOH;
+        SequencePosition position = default;
+        try
         {
-            return;
-        }
+            var result = await httpContext.Request.BodyReader.ReadAtLeastAsync(readSize, httpContext.RequestAborted).ConfigureAwait(false);
+            position = result.Buffer.End;
+            if (result.IsCanceled)
+            {
+                throw new OperationCanceledException("Read call was canceled.");
+            }
+            if (!result.IsCompleted || result.Buffer.Length > readSize)
+            {
+                // Too big!
+                throw new BadHttpRequestException($"The request body was larger than the max allowed of {readSize} bytes.", StatusCodes.Status400BadRequest);
+            }
 
-        await exporter(readResultBuffer).ConfigureAwait(false);
-        reader.AdvanceTo(readResultBuffer.Start, readResultBuffer.End);
-        await reader.CompleteAsync().ConfigureAwait(false);
+            await exporter(result.Buffer).ConfigureAwait(false);
+        }
+        finally
+        {
+            httpContext.Request.BodyReader.AdvanceTo(position);
+        }
     }
 }
