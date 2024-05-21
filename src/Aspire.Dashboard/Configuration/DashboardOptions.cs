@@ -72,7 +72,7 @@ public sealed class OtlpOptions
     public string? PrimaryApiKey { get; set; }
     public string? SecondaryApiKey { get; set; }
     public OtlpAuthMode? AuthMode { get; set; }
-    public string? EndpointUrl { get; set; }
+    public string? GrpcEndpointUrl { get; set; }
 
     public string? HttpEndpointUrl { get; set; }
 
@@ -98,16 +98,16 @@ public sealed class OtlpOptions
 
     internal bool TryParseOptions([NotNullWhen(false)] out string? errorMessage)
     {
-        if (string.IsNullOrEmpty(EndpointUrl))
+        if (string.IsNullOrEmpty(GrpcEndpointUrl))
         {
-            errorMessage = $"OTLP grpc endpoint URL is not configured. Specify a {DashboardConfigNames.DashboardOtlpUrlName.EnvVarName} value.";
+            errorMessage = $"OTLP gRPC endpoint URL is not configured. Specify a {DashboardConfigNames.DashboardOtlpUrlName.EnvVarName} value.";
             return false;
         }
         else
         {
-            if (!Uri.TryCreate(EndpointUrl, UriKind.Absolute, out _parsedGrpcEndpointUrl))
+            if (!Uri.TryCreate(GrpcEndpointUrl, UriKind.Absolute, out _parsedGrpcEndpointUrl))
             {
-                errorMessage = $"Failed to parse OTLP grpc endpoint URL '{EndpointUrl}'.";
+                errorMessage = $"Failed to parse OTLP gRPC endpoint URL '{GrpcEndpointUrl}'.";
                 return false;
             }
         }
