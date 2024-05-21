@@ -30,7 +30,7 @@ public static class IntegrationTestHelpers
         var initialData = new Dictionary<string, string?>
         {
             [DashboardConfigNames.DashboardFrontendUrlName.ConfigKey] = "http://127.0.0.1:0",
-            [DashboardConfigNames.DashboardOtlpUrlName.ConfigKey] = "http://127.0.0.1:0",
+            [DashboardConfigNames.DashboardOtlpGrpcUrlName.ConfigKey] = "http://127.0.0.1:0",
             [DashboardConfigNames.DashboardOtlpAuthModeName.ConfigKey] = nameof(OtlpAuthMode.Unsecured),
             [DashboardConfigNames.DashboardFrontendAuthModeName.ConfigKey] = nameof(FrontendAuthMode.Unsecured)
         };
@@ -55,7 +55,7 @@ public static class IntegrationTestHelpers
                 {
                     sources.Remove(item);
                 }
-            }            
+            }
             builder.Configuration.AddConfiguration(config);
 
             builder.Logging.AddXunit(testOutputHelper);

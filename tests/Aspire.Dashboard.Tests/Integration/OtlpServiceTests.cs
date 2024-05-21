@@ -25,7 +25,7 @@ public class OtlpServiceTests
     }
 
     [Fact]
-    public async Task CallService_OtlpEndPoint_Success()
+    public async Task CallService_OtlpGrpcEndPoint_Success()
     {
         // Arrange
         await using var app = IntegrationTestHelpers.CreateDashboardWebApplication(_testOutputHelper);
@@ -45,7 +45,7 @@ public class OtlpServiceTests
     }
 
     [Fact]
-    public async Task CallService_OtlpEndPoint_RequiredApiKeyMissing_Failure()
+    public async Task CallService_OtlpGrpcEndPoint_RequiredApiKeyMissing_Failure()
     {
         // Arrange
         var apiKey = "TestKey123!";
@@ -67,7 +67,7 @@ public class OtlpServiceTests
     }
 
     [Fact]
-    public async Task CallService_OtlpEndPoint_RequiredApiKeyWrong_Failure()
+    public async Task CallService_OtlpGrpcEndPoint_RequiredApiKeyWrong_Failure()
     {
         // Arrange
         var apiKey = "TestKey123!";
@@ -94,7 +94,7 @@ public class OtlpServiceTests
     }
 
     [Fact]
-    public async Task CallService_OtlpEndPoint_RequiredApiKeySent_Success()
+    public async Task CallService_OtlpGrpcEndPoint_RequiredApiKeySent_Success()
     {
         // Arrange
         var apiKey = "TestKey123!";
@@ -121,7 +121,7 @@ public class OtlpServiceTests
     }
 
     [Fact]
-    public async Task CallService_OtlpEndPoint_RequiredSecondaryApiKeySent_Success()
+    public async Task CallService_OtlpGrpcEndPoint_RequiredSecondaryApiKeySent_Success()
     {
         // Arrange
         var apiKey = "TestKey123!";
@@ -150,7 +150,7 @@ public class OtlpServiceTests
     }
 
     [Fact]
-    public async Task CallService_OtlpEndPoint_ExternalFile_FileChanged_UseConfiguredKey()
+    public async Task CallService_OtlpGrpcEndPoint_ExternalFile_FileChanged_UseConfiguredKey()
     {
         // Arrange
         var apiKey = "TestKey123!";
@@ -256,7 +256,7 @@ public class OtlpServiceTests
         await using var app = IntegrationTestHelpers.CreateDashboardWebApplication(_testOutputHelper, config =>
         {
             // Change dashboard to HTTPS so the caller can negotiate a HTTP/2 connection.
-            config[DashboardConfigNames.DashboardOtlpUrlName.ConfigKey] = "https://127.0.0.1:0";
+            config[DashboardConfigNames.DashboardOtlpGrpcUrlName.ConfigKey] = "https://127.0.0.1:0";
 
             config[DashboardConfigNames.DashboardOtlpAuthModeName.ConfigKey] = OtlpAuthMode.ClientCertificate.ToString();
         });
@@ -282,7 +282,7 @@ public class OtlpServiceTests
         await using var app = IntegrationTestHelpers.CreateDashboardWebApplication(_testOutputHelper, config =>
         {
             // Change dashboard to HTTPS so the caller can negotiate a HTTP/2 connection.
-            config[DashboardConfigNames.DashboardOtlpUrlName.ConfigKey] = "https://127.0.0.1:0";
+            config[DashboardConfigNames.DashboardOtlpGrpcUrlName.ConfigKey] = "https://127.0.0.1:0";
 
             config[DashboardConfigNames.DashboardOtlpAuthModeName.ConfigKey] = OtlpAuthMode.ClientCertificate.ToString();
 
