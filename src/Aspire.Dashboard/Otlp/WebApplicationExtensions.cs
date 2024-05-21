@@ -21,7 +21,7 @@ public static class WebApplicationExtensions
         app.MapPost("/v1/metrics",
                 async ([FromServices] OtlpMetricsService service, HttpContext httpContext) =>
                 {
-                    await ExportOtlpData(httpContext, sequence => service.Export(ExportMetricsServiceRequest.Parser.ParseFrom(sequence.IsSingleSegment ? sequence.First.Span : sequence.ToArray().AsSpan()), null!)).ConfigureAwait(false);
+                    await ExportOtlpData(httpContext, sequence => service.Export(ExportMetricsServiceRequest.Parser.ParseFrom(sequence), null!)).ConfigureAwait(false);
                 }
             ).RequireAuthorization(OtlpAuthorization.PolicyName)
             .RequireHost($"*:{httpEndpoint.Port}");
@@ -29,7 +29,7 @@ public static class WebApplicationExtensions
         app.MapPost("/v1/traces",
                 async ([FromServices] OtlpTraceService service, HttpContext httpContext) =>
                 {
-                    await ExportOtlpData(httpContext, sequence => service.Export(ExportTraceServiceRequest.Parser.ParseFrom(sequence.IsSingleSegment ? sequence.First.Span : sequence.ToArray().AsSpan()), null!)).ConfigureAwait(false);
+                    await ExportOtlpData(httpContext, sequence => service.Export(ExportTraceServiceRequest.Parser.ParseFrom(sequence), null!)).ConfigureAwait(false);
                 }
             ).RequireAuthorization(OtlpAuthorization.PolicyName)
             .RequireHost($"*:{httpEndpoint.Port}");
@@ -37,7 +37,7 @@ public static class WebApplicationExtensions
         app.MapPost("/v1/logs",
                 async ([FromServices] OtlpLogsService service, HttpContext httpContext) =>
                 {
-                    await ExportOtlpData(httpContext, sequence => service.Export(ExportLogsServiceRequest.Parser.ParseFrom(sequence.IsSingleSegment ? sequence.First.Span : sequence.ToArray().AsSpan()), null!)).ConfigureAwait(false);
+                    await ExportOtlpData(httpContext, sequence => service.Export(ExportLogsServiceRequest.Parser.ParseFrom(sequence), null!)).ConfigureAwait(false);
                 }
             ).RequireAuthorization(OtlpAuthorization.PolicyName)
             .RequireHost($"*:{httpEndpoint.Port}");
