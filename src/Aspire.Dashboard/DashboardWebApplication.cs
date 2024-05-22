@@ -44,6 +44,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
     private readonly IReadOnlyList<string> _validationFailures;
     private Func<EndpointInfo>? _frontendEndPointAccessor;
     private Func<EndpointInfo>? _otlpServiceEndPointAccessor;
+    private Func<EndpointInfo>? _otlpServiceHttpEndPointAccessor;
 
     public Func<EndpointInfo> FrontendEndPointAccessor
     {
@@ -53,6 +54,11 @@ public sealed class DashboardWebApplication : IAsyncDisposable
     public Func<EndpointInfo> OtlpServiceEndPointAccessor
     {
         get => _otlpServiceEndPointAccessor ?? throw new InvalidOperationException("WebApplication not started yet.");
+    }
+
+    public Func<EndpointInfo> OtlpServiceHttpEndPointAccessor
+    {
+        get => _otlpServiceHttpEndPointAccessor ?? throw new InvalidOperationException("WebApplication not started yet.");
     }
 
     public IOptionsMonitor<DashboardOptions> DashboardOptionsMonitor => _dashboardOptionsMonitor;
@@ -446,6 +452,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
 
             configurationLoader.Endpoint("OtlpHttp", endpointConfiguration =>
             {
+                _otlpServiceHttpEndPointAccessor ??= CreateEndPointAccessor(endpointConfiguration);
                 if (hasSingleEndpoint)
                 {
                     logger.LogDebug("Browser and OTLP accessible on a single endpoint.");

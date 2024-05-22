@@ -21,49 +21,64 @@ public static class WebApplicationExtensions
         app.MapPost("/v1/metrics",
                 async ([FromServices] OtlpMetricsService service, HttpContext httpContext) =>
                 {
-                    await ExportOtlpData(httpContext, sequence => service.Export(ExportMetricsServiceRequest.Parser.ParseFrom(sequence), null!)).ConfigureAwait(false);
+                    return await ExportOtlpData(httpContext,
+                            sequence => service.Export(ExportMetricsServiceRequest.Parser.ParseFrom(sequence), null!))
+                        .ConfigureAwait(false);
                 }
             ).RequireAuthorization(OtlpAuthorization.PolicyName)
+            .DisableAntiforgery()
             .RequireHost($"*:{httpEndpoint.Port}");
 
         app.MapPost("/v1/traces",
                 async ([FromServices] OtlpTraceService service, HttpContext httpContext) =>
                 {
-                    await ExportOtlpData(httpContext, sequence => service.Export(ExportTraceServiceRequest.Parser.ParseFrom(sequence), null!)).ConfigureAwait(false);
+                    return await ExportOtlpData(httpContext,
+                            sequence => service.Export(ExportTraceServiceRequest.Parser.ParseFrom(sequence), null!))
+                        .ConfigureAwait(false);
                 }
             ).RequireAuthorization(OtlpAuthorization.PolicyName)
+            .DisableAntiforgery()
             .RequireHost($"*:{httpEndpoint.Port}");
 
         app.MapPost("/v1/logs",
                 async ([FromServices] OtlpLogsService service, HttpContext httpContext) =>
                 {
-                    await ExportOtlpData(httpContext, sequence => service.Export(ExportLogsServiceRequest.Parser.ParseFrom(sequence), null!)).ConfigureAwait(false);
+                    return await ExportOtlpData(httpContext,
+                            sequence => service.Export(ExportLogsServiceRequest.Parser.ParseFrom(sequence), null!))
+                        .ConfigureAwait(false);
                 }
             ).RequireAuthorization(OtlpAuthorization.PolicyName)
+            .DisableAntiforgery()
             .RequireHost($"*:{httpEndpoint.Port}");
 
         return app;
     }
 
-    private static async Task ExportOtlpData(HttpContext httpContext, Func<ReadOnlySequence<byte>, Task> exporter)
+    private static async Task<T> ExportOtlpData<T>(
+        HttpContext httpContext,
+        Func<ReadOnlySequence<byte>, Task<T>> exporter)
     {
         var readSize = (int?)httpContext.Request.Headers.ContentLength ?? MaxSizeLessThanLOH;
         SequencePosition position = default;
         try
         {
-            var result = await httpContext.Request.BodyReader.ReadAtLeastAsync(readSize, httpContext.RequestAborted).ConfigureAwait(false);
+            var result = await httpContext.Request.BodyReader.ReadAtLeastAsync(readSize, httpContext.RequestAborted)
+                .ConfigureAwait(false);
             position = result.Buffer.End;
             if (result.IsCanceled)
             {
                 throw new OperationCanceledException("Read call was canceled.");
             }
+
             if (!result.IsCompleted || result.Buffer.Length > readSize)
             {
                 // Too big!
-                throw new BadHttpRequestException($"The request body was larger than the max allowed of {readSize} bytes.", StatusCodes.Status400BadRequest);
+                throw new BadHttpRequestException(
+                    $"The request body was larger than the max allowed of {readSize} bytes.",
+                    StatusCodes.Status400BadRequest);
             }
 
-            await exporter(result.Buffer).ConfigureAwait(false);
+            return await exporter(result.Buffer).ConfigureAwait(false);
         }
         finally
         {
