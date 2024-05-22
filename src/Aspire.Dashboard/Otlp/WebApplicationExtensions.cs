@@ -26,7 +26,6 @@ public static class WebApplicationExtensions
                         .ConfigureAwait(false);
                 }
             ).RequireAuthorization(OtlpAuthorization.PolicyName)
-            .DisableAntiforgery()
             .RequireHost($"*:{httpEndpoint.Port}");
 
         app.MapPost("/v1/traces",
@@ -37,7 +36,6 @@ public static class WebApplicationExtensions
                         .ConfigureAwait(false);
                 }
             ).RequireAuthorization(OtlpAuthorization.PolicyName)
-            .DisableAntiforgery()
             .RequireHost($"*:{httpEndpoint.Port}");
 
         app.MapPost("/v1/logs",
@@ -48,7 +46,6 @@ public static class WebApplicationExtensions
                         .ConfigureAwait(false);
                 }
             ).RequireAuthorization(OtlpAuthorization.PolicyName)
-            .DisableAntiforgery()
             .RequireHost($"*:{httpEndpoint.Port}");
 
         return app;
